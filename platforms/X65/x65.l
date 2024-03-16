@@ -4,7 +4,7 @@ FEATURES {
 }
 
 MEMORY {
-	ROM: start = $010000, size = $10000, fillval=$FF, file = %O;
+	ROM: start = $080000, size = $10000, fillval=$FF, file = %O;
 	ZP: start = $0000, size = $100;
 }
 
