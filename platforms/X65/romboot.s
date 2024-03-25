@@ -4,7 +4,11 @@
 .include  "macros.inc"
 .include  "./x65-hw.inc"
 
-; this puts romboot at the top of CBA=$08, which is also at the top of ROMBLOCK=$3
+;
+; OBSOLETE = this is NOT used the X65 startup!
+;
+
+; this puts romboot at the top of CBA=$01
 .segment  "ROMBOOT"
 .proc     romboot
           ; Go full native mode

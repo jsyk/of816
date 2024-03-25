@@ -1,10 +1,13 @@
+# Linker script for X65-SBC with 65C816
+# We put the FORTH code at Bank 8.
+
 
 FEATURES {
 	STARTADDRESS: default = $010000;
 }
 
 MEMORY {
-	ROM: start = $080000, size = $10000, fillval=$FF, file = %O;
+	ROM: start = $010000, size = $10000, fillval=$FF, file = %O;
 	ZP: start = $0000, size = $100;
 }
 

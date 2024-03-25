@@ -6,9 +6,11 @@ cpu_clk   = 8000000
 ; Memory regions
 ; X65 has 2MB of SRAM, which is divided in 32 of 64kB banks.
 ; *****************
-X65_ROM  = $080000     ; start of forth "ROM", put in bank $8, this is just the start address where to jump from romboot
+; X65_ROM  = $080000     ; start of forth "ROM", put in bank $8, this is just the start address where to jump from romboot
+X65_ROM  = $010000     ; start of forth "ROM", put in bank $01, this is just the start address where to jump from romboot
 ; Neon_VRAM = $400000
-X65_RAM1 = $010000      ; 64kB unused, then 64kB for dictionary.... hm...
+; X65_RAM1 = $010000      ; 64kB unused, then 64kB for dictionary.... hm...
+X65_RAM1 = $020000      ; 64kB unused, then 64kB for dictionary.... hm...
 ; X65_RAM2 = $0A0000      ; what?
 
 ; *****************
@@ -62,8 +64,8 @@ X65_RAM1 = $010000      ; 64kB unused, then 64kB for dictionary.... hm...
 ;                                                     ROM-Block #31 is from SRAM 0x0F_C000 to 0x0F_FFFF (= also known as the 8kB RAM-Blocks #254 and #255).
 ;                                                 The ROMBLOCK register allows addressing up to 64 ROM-Blocks, but only the first 32 are available in the SRAM.
 
-RAMBLOCK    = $0000
-ROMBLOCK    = $0001
+; RAMBLOCK    = $00
+; ROMBLOCK    = $01
 
 ;
 ; NORA USB/UART registers:
