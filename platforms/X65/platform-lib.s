@@ -657,7 +657,8 @@ table:    .addr _sf_pre_init
           ; that we defined at the beginning of this file.
           ENTER
         ;   ONLIT  LAST_neon816                 ; what is this?
-          SLIT   "NEON816X65"
+          ; SLIT   "NEON816X65"
+          SLIT   "X65"
           .dword dVOCAB
           .dword LAST           ; now set the head of the vocabulary to the
           .dword drXT           ; last word defined in the neon816 dictionary
@@ -698,6 +699,15 @@ table:    .addr _sf_pre_init
           .a8
           tya
           sta   f:USB_UART_DATA                 ; f: far addressing (24 bits).
+
+          ; call BIOS function vt_putchar
+          jsl   f:$00FF00
+          
+          sep   #SHORT_A
+          .a8
+          rep   #SHORT_I
+          .i16
+
 :         lda   f:USB_UART_STAT
           bit   #$04                            ; test bit [2] = Is TX FIFO empty AND all chars were sent?
           beq   :-                              ; loop until the bit is set
@@ -709,6 +719,10 @@ table:    .addr _sf_pre_init
 .endproc
 
 .proc     _sf_keyq
+          ; Check if there is a character in the keyboard buffer
+          ; call BIOS function vt_keyq
+          jsl   f:$00FF04
+          
           ldy   #$0000          ; anticipate false
           ; Check if there is a character in the UART RX FIFO
           sep   #SHORT_A
@@ -727,9 +741,15 @@ table:    .addr _sf_pre_init
 
 .proc     _sf_key
           ; Wait for character from UART and read it
+:         
+          ; Check if there is a character in the keyboard buffer
+          ; call BIOS function vt_keyq
+          jsl   f:$00FF04
+
           sep   #SHORT_A
           .a8
-:         lda   f:USB_UART_STAT         ; bit [7] = Is RX FIFO empty?
+
+          lda   f:USB_UART_STAT         ; bit [7] = Is RX FIFO empty?
           bmi   :-                      ; branch if it is empty! => loop until it is not empty
           lda   f:USB_UART_DATA         ; Get character from UART RX FIFO
           rep   #SHORT_A
