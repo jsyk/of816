@@ -3,6 +3,9 @@
 .include  "./x65-hw.inc"
 
 PLATF_DP  = DP_END
+
+; ENTER2CRLF    = PLATF_DP
+
 ; KEYMODS   = PLATF_DP              ; keyboard modifiers, 16 bits
 ;                                   ;   b15 = left shift
 ;                                   ;   b14 = right shift
@@ -634,6 +637,12 @@ table:    .addr _sf_pre_init
         ;   ; EOC
         ;   stz   KEYMODS
         ;   stz   PS2DEVS
+          ; sep   #SHORT_A
+          ; .a8
+          ; stz  z:ENTER2CRLF
+          ; rep   #SHORT_A
+          ; .a16
+          
           plx
           jmp   _sf_success
 .endproc
@@ -719,18 +728,42 @@ table:    .addr _sf_pre_init
 .endproc
 
 .proc     _sf_keyq
+          ; Check if there is CR/LF in our flags
+          ; sep   #SHORT_A
+          ; .a8
+          ; lda   z:ENTER2CRLF
+          ; rep   #SHORT_A
+          ; .a16
+          ; beq   tst_kbd     ; no -> check keyboard buffer
+
+          ; ; yes -> return true, we have a (virtual) character
+          ; rep    #SHORT_I
+          ; .i16
+          ; ldy   #$0001
+          ; bra  done
+
+tst_kbd:
           ; Check if there is a character in the keyboard buffer
           ; call BIOS function vt_keyq
+          .a16
+          lda   #$00          ; -> false: peek character from the keyboard buffer, but do not remove it
           jsl   f:$00FF04
-          
+          .i16
+          .a8
           ldy   #$0000          ; anticipate false
           ; Check if there is a character in the UART RX FIFO
           sep   #SHORT_A
           .a8
+          cmp   #$00
+          beq   tst_uart                      ; branch if there is no character in the keyboard buffer
+          iny                                 ; otherwise: character in the keyboard buffer, set Y=true
+          bra   done
+
+tst_uart:
           lda   f:USB_UART_STAT       ; bit [7] = Is RX FIFO empty?
-          bmi   :+                      ; branch if it is empty!
+          bmi   done                      ; branch if it is empty!
           iny                           ; otherwise: not empty, set true
-:         rep   #SHORT_A
+done:     rep   #SHORT_A
           .a16
           ; EOC
           tya
@@ -741,17 +774,41 @@ table:    .addr _sf_pre_init
 
 .proc     _sf_key
           ; Wait for character from UART and read it
-:         
+loop:         
           ; Check if there is a character in the keyboard buffer
           ; call BIOS function vt_keyq
+          .a16
+          rep   #SHORT_A
+          
+          lda   #$01          ; -> true: remove character from the keyboard buffer
           jsl   f:$00FF04
-
+          .i16
           sep   #SHORT_A
           .a8
+          
+          ; Check if there was a character in the keyboard buffer
+          cmp   #$00
+          bne   got_char                      ; branch if there is character in the keyboard buffer -> done
+          ; no character from the keyboard buffer; 
 
+          ; Check if there is a character in the UART RX FIFO
           lda   f:USB_UART_STAT         ; bit [7] = Is RX FIFO empty?
-          bmi   :-                      ; branch if it is empty! => loop until it is not empty
+          bmi   loop                      ; branch if it is empty! => loop until it is not empty
+
           lda   f:USB_UART_DATA         ; Get character from UART RX FIFO
+          bra   done
+
+got_char:
+          ; we have the kbd character in A
+          ; is it LF ?
+          cmp   #$0A
+          bne   done      ; no -> done
+          
+          ; yes -> change to CR 
+          lda   #$0D
+
+          ; continue to done
+done:
           rep   #SHORT_A
           .a16
           ; EOC
